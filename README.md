@@ -115,9 +115,52 @@ products in small quantities. Engaged retail shoppers worth retaining.
 
 ---
 
+### 4. `churn_prediction_project.ipynb` — Churn Prediction + Explainability
+Identifying customers at risk of churning using RFM and behavioral features.
+- 4,338 customers, 33.3% churn rate (90-day definition)
+- Feature engineering: RFM + UniqueProducts, TotalItems, AvgDaysBetweenOrders
+- Log transformation to handle skewed distributions
+- Models: Logistic Regression, Random Forest, XGBoost
+- Threshold tuning to maximise Churned Recall
+- SHAP explainability — global feature importance + individual predictions
+- Data leakage lesson: Recency cannot be used as a feature when it defines the label
+
+#### Model Performance (6 features, optimal threshold)
+
+| Model | AUC | Churners Caught | False Alarms |
+|---|---|---|---|
+| Logistic Regression | **0.791** | 77.5% | 31.3% ✅ |
+| XGBoost | 0.757 | 84.8% | 43.5% |
+| Random Forest | 0.763 | 95.8% | 57.7% ❌ |
+
+#### SHAP Feature Importance
+
+| Feature | Importance | Interpretation |
+|---|---|---|
+| Log_Frequency | 0.60 | Most important — how often they order |
+| Log_TotalItems | 0.32 | Total volume of items purchased |
+| Log_UniqueProducts | 0.32 | Variety of products explored |
+| Log_Monetary | 0.19 | Total spend — less important than frequency |
+| Log_AvgDaysBetweenOrders | 0.11 | Purchase rhythm |
+| UniqueCountries | 0.00 | No predictive value |
+
+#### Key Business Insight
+Churn is driven by disengagement — not by how much customers spend,
+but by how often and how broadly they shop. Retention strategies should
+focus on increasing purchase frequency and product discovery rather
+than discounting.
+
+#### ✅ Final Model
+**Logistic Regression with threshold 0.33** — AUC 0.791, catches 77.5% of
+churners with a manageable 31.3% false alarm rate.
+
+---
+
 ## Key Lessons Learned
 - **Data leakage** — early regression models hit R²=0.97 using same-period features.
   Temporal split brought it to a real 0.52
+- **Recency as a leakage source** — using Recency as a feature when it directly
+  defines the churn label produces perfect but meaningless results (AUC=1.0)
 - **Correlation ≠ importance** — features with high raw correlation can be useless
   inside a model due to overlap with other features
 - **Calibration matters** — SVM outputs decision scores not real probabilities.
@@ -131,13 +174,19 @@ products in small quantities. Engaged retail shoppers worth retaining.
   useful but PCA revealed they carry almost no real signal
 - **Autoencoders outperform PCA for clustering** — PCA is limited to linear
   relationships. The autoencoder's non-linear compression produced a 50% better
-  silhouette score and surfaced a genuinely different customer segmentation,
-  demonstrating that deep learning adds value even in unsupervised tasks
+  silhouette score and surfaced a genuinely different customer segmentation
+- **Threshold tuning beats model switching** — lowering the classification
+  threshold from 0.50 to 0.33 improved Churned Recall from 49% to 77%
+  with minimal accuracy loss — often more effective than trying a new model
+- **SHAP adds business value** — feature importance alone doesn't explain
+  direction. SHAP beeswarm plots show that low frequency pushes strongly
+  toward churn while high frequency strongly predicts retention
 
 ---
 
 ## Stack
-Python, pandas, scikit-learn, scipy, TensorFlow/Keras, matplotlib, seaborn
+Python, pandas, scikit-learn, scipy, TensorFlow/Keras, XGBoost, SHAP,
+matplotlib, seaborn
 
 ## Dataset
 UCI Online Retail Dataset:
